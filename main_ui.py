@@ -18,10 +18,10 @@ class RealEstateApp(ctk.CTk):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
-        # ==================== القائمة الجانبية (Sidebar) ====================
+        # ==================== القائمة الجانبية ====================
         self.sidebar_frame = ctk.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(4, weight=1)
+        self.sidebar_frame.grid_rowconfigure(5, weight=1)
 
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="بيتنا العقارية\nOur Home", font=ctk.CTkFont(size=20, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 30))
@@ -32,12 +32,17 @@ class RealEstateApp(ctk.CTk):
         self.btn_allocate = ctk.CTkButton(self.sidebar_frame, text="تخصيص شقة", command=self.show_allocate_frame)
         self.btn_allocate.grid(row=2, column=0, padx=20, pady=10)
 
+        # الزر الجديد لطباعة الإيصال
+        self.btn_receipt = ctk.CTkButton(self.sidebar_frame, text="استخراج إيصال (PDF)", fg_color="#d9534f", hover_color="#c9302c", command=self.show_receipt_frame)
+        self.btn_receipt.grid(row=3, column=0, padx=20, pady=10)
+
         # ==================== الشاشة الرئيسية ====================
         self.main_frame = ctk.CTkFrame(self, corner_radius=15)
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
 
         self.setup_payment_ui()
 
+    # ------------------ 1. شاشة الدفعات ------------------ #
     def setup_payment_ui(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
@@ -45,10 +50,9 @@ class RealEstateApp(ctk.CTk):
         title = ctk.CTkLabel(self.main_frame, text="تسجيل دفعة مالية جديدة", font=ctk.CTkFont(size=24, weight="bold"))
         title.pack(pady=(30, 20))
 
-        # === القائمة المنسدلة للعملاء ===
-        clients = self.db.get_all_clients() # جلب الأسماء من العقل
+        clients = self.db.get_all_clients()
         if not clients:
-            clients = ["لا يوجد ملفات عملاء"]
+            clients =["لا يوجد ملفات عملاء"]
 
         self.combo_client = ctk.CTkComboBox(self.main_frame, values=clients, justify="center", width=400, height=40)
         self.combo_client.set("...اختر العميل من القائمة أو ابحث...")
@@ -71,6 +75,7 @@ class RealEstateApp(ctk.CTk):
         self.btn_save = ctk.CTkButton(self.main_frame, text="حفظ وترحيل إلى الإكسل", font=ctk.CTkFont(size=16, weight="bold"), height=50, width=400, fg_color="#28a745", hover_color="#218838", command=self.process_payment)
         self.btn_save.pack(pady=(30, 10))
 
+    # ------------------ 2. شاشة التخصيص ------------------ #
     def setup_allocate_ui(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
@@ -78,7 +83,6 @@ class RealEstateApp(ctk.CTk):
         title = ctk.CTkLabel(self.main_frame, text="تخصيص شقة (نقل العميل للمتخصص)", font=ctk.CTkFont(size=24, weight="bold"))
         title.pack(pady=(30, 20))
         
-        # === القائمة المنسدلة للعملاء غير المخصصين فقط ===
         unallocated_clients = self.db.get_unallocated_clients()
         if not unallocated_clients:
             unallocated_clients = ["لا يوجد عملاء غير مخصصين"]
@@ -90,13 +94,36 @@ class RealEstateApp(ctk.CTk):
         btn_confirm = ctk.CTkButton(self.main_frame, text="تأكيد التخصيص والنقل", font=ctk.CTkFont(size=16, weight="bold"), height=50, width=400, command=self.process_allocation)
         btn_confirm.pack(pady=20)
 
-    # ==================== دوال التنقل ومعالجة الأوامر ====================
+    # ------------------ 3. شاشة طباعة الإيصال ------------------ #
+    def setup_receipt_ui(self):
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+            
+        title = ctk.CTkLabel(self.main_frame, text="طباعة إيصال (PDF)", font=ctk.CTkFont(size=24, weight="bold"))
+        title.pack(pady=(30, 20))
+        
+        clients = self.db.get_all_clients()
+        if not clients:
+            clients = ["لا يوجد ملفات عملاء"]
+            
+        self.combo_receipt_client = ctk.CTkComboBox(self.main_frame, values=clients, justify="center", width=400, height=40)
+        self.combo_receipt_client.set("...اختر العميل لطباعة الإيصال الأخير...")
+        self.combo_receipt_client.pack(pady=20)
+        
+        self.btn_generate_pdf = ctk.CTkButton(self.main_frame, text="توليد الإيصال (PDF)", font=ctk.CTkFont(size=16, weight="bold"), height=50, width=400, fg_color="#d9534f", hover_color="#c9302c", command=self.process_receipt)
+        self.btn_generate_pdf.pack(pady=20)
+
+    # ==================== دوال التنقل ====================
     def show_payment_frame(self):
         self.setup_payment_ui()
 
     def show_allocate_frame(self):
         self.setup_allocate_ui()
+        
+    def show_receipt_frame(self):
+        self.setup_receipt_ui()
 
+    # ==================== دوال معالجة الأوامر ====================
     def process_payment(self):
         client = self.combo_client.get().strip()
         note = self.entry_note.get().strip()
@@ -104,7 +131,7 @@ class RealEstateApp(ctk.CTk):
         syp_str = self.entry_syp.get().strip()
         usd_str = self.entry_usd.get().strip()
 
-        if client in ["...اختر العميل من القائمة أو ابحث...", "لا يوجد ملفات عملاء"] or not client:
+        if client in["...اختر العميل من القائمة أو ابحث...", "لا يوجد ملفات عملاء"] or not client:
             messagebox.showwarning("تنبيه", "يرجى اختيار اسم العميل من القائمة.")
             return
 
@@ -144,7 +171,26 @@ class RealEstateApp(ctk.CTk):
         success, message = self.db.allocate_apartment(client)
         if success:
             messagebox.showinfo("نجاح", message)
-            self.setup_allocate_ui() # تحديث القائمة المنسدلة فوراً بعد النقل
+            self.setup_allocate_ui()
+        else:
+            messagebox.showerror("خطأ", message)
+
+    def process_receipt(self):
+        client = self.combo_receipt_client.get().strip()
+        
+        if client in["...اختر العميل لطباعة الإيصال الأخير...", "لا يوجد ملفات عملاء"] or not client:
+            messagebox.showwarning("تنبيه", "يرجى اختيار اسم العميل من القائمة.")
+            return
+            
+        self.btn_generate_pdf.configure(text="جاري إنشاء الـ PDF...", state="disabled")
+        self.update()
+        
+        success, message = self.db.generate_receipt_pdf(client)
+        
+        self.btn_generate_pdf.configure(text="توليد الإيصال (PDF)", state="normal")
+        
+        if success:
+            messagebox.showinfo("نجاح", message)
         else:
             messagebox.showerror("خطأ", message)
 

@@ -15,24 +15,20 @@ class ExcelManager:
         for folder in[self.templates_dir, self.unallocated_dir, self.allocated_dir, self.backups_dir, self.receipts_dir]:
             folder.mkdir(parents=True, exist_ok=True)
 
-    # ================= الدالتان الجديدتان لجلب أسماء العملاء ================= #
     def get_all_clients(self):
-        """تجلب جميع العملاء من المجلدين (لشاشة الدفعات)"""
-        clients =[]
-        for folder in [self.unallocated_dir, self.allocated_dir]:
+        clients = []
+        for folder in[self.unallocated_dir, self.allocated_dir]:
             for file in folder.glob("*.xlsx"):
-                if not file.name.startswith("~"):  # تجاهل ملفات الإكسل المؤقتة المفتوحة
-                    clients.append(file.stem)      # استخراج الاسم بدون .xlsx
+                if not file.name.startswith("~"):
+                    clients.append(file.stem)
         return sorted(clients)
 
     def get_unallocated_clients(self):
-        """تجلب فقط العملاء غير المخصصين (لشاشة التخصيص)"""
         clients =[]
         for file in self.unallocated_dir.glob("*.xlsx"):
             if not file.name.startswith("~"):
                 clients.append(file.stem)
         return sorted(clients)
-    # ======================================================================== #
 
     def _get_client_file(self, client_name):
         unallocated_path = self.unallocated_dir / f"{client_name}.xlsx"
@@ -97,3 +93,36 @@ class ExcelManager:
             
         except Exception as e:
             return False, f"حدث خطأ أثناء التخصيص: {str(e)}"
+
+    def generate_receipt_pdf(self, client_name):
+        try:
+            file_path, status = self._get_client_file(client_name)
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            pdf_name = f"إيصال_{client_name}_{timestamp}.pdf"
+            pdf_path = self.receipts_dir / pdf_name
+            
+            app = xw.App(visible=False)
+            wb = app.books.open(file_path)
+            
+            receipt_sheet = wb.sheets["ورقة3"]
+            receipt_sheet.api.ExportAsFixedFormat(0, str(pdf_path))
+            
+            wb.close()
+            app.quit()
+            
+            return True, f"تم إنشاء الإيصال بنجاح!\nتجد الملف في مجلد Receipts_PDF\nباسم: {pdf_name}"
+            
+        except PermissionError:
+            return False, "خطأ: ملف الإكسل مفتوح حالياً. يرجى إغلاقه أولاً لتمكين الطباعة."
+        except Exception as e:
+            try:
+                wb.close()
+                app.quit()
+            except:
+                pass
+            return False, f"حدث خطأ أثناء إنشاء الـ PDF: {str(e)}"
+
+if __name__ == "__main__":
+    db = ExcelManager()
+    print("ExcelManager is working perfectly!")
