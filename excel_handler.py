@@ -18,9 +18,14 @@ class ExcelHandler:
             
             # ========== التعديل السحري هنا ==========
             # سنجعل الإكسل مرئياً مؤقتاً لنرى المشكلة، ونلغي التنبيهات
-            app = xw.App(visible=True, add_book=False)
-            app.display_alerts = False  # تجاهل النوافذ المنبثقة
+
+            app = xw.App(visible=False, add_book=False) # اجعله False ليعمل في الخلفية بسرعة
+            app.display_alerts = False
             app.screen_updating = False
+
+            try:
+                # إضافة هذا السطر قبل فتح الملف للتأكد من أن أي رسائل "إصلاح" يتم قبولها تلقائياً
+                wb = app.books.open(absolute_path, update_links=False, ignore_read_only_corrupted=True)
 
             # تجاهل رسائل تحديث الروابط (update_links=False)
             wb = app.books.open(absolute_path, update_links=False)
