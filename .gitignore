@@ -1,0 +1,41 @@
+# --- ملفات بايثون (Python) ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# --- ملفات النظام (OS) ---
+.DS_Store
+Thumbs.db
+
+# --- ملفات إكسل المؤقتة (Excel Temp Files) ---
+# إكسل ينشئ ملفات تبدأ بـ ~$ عند فتح أي ملف، لا نريد رفعها أبداً
+~$*.xlsx
+~$*.xls
+
+# --- قاعدة بيانات المشروع (Client Data) ---
+# نحن نريد رفع هيكلية المجلدات، ولكن لا نريد رفع ملفات العملاء الحقيقية
+# لضمان خصوصية البيانات
+Real_Estate_System/Database/Unallocated/*.xlsx
+Real_Estate_System/Database/Allocated/*.xlsx
+
+# --- النسخ الاحتياطية (Backups) ---
+# المجلد الذي طلبته تحديداً
+Real_Estate_System/Backups/
+Backups/
+
+# --- التقارير والإيصالات المستخرجة (Generated PDFs) ---
+# ملفات الـ PDF ناتجة عن البرنامج ولا يجب أن تكون في المستودع
+Real_Estate_System/Receipts_PDF/
+Receipts_PDF/
+
+# --- استثناء (Keep Templates) ---
+# نريد بقاء ملف القالب الأساسي في الـ Git لكي يعمل البرنامج عند تحميله من جهاز آخر
+!Real_Estate_System/Database/Templates/Unallocated_Template.xlsx
+!Real_Estate_System/Database/Templates/Allocated_Template.xlsx
+
+# --- ملفات المحرر (IDE) ---
+.vscode/
+.idea/
+*.swp

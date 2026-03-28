@@ -23,13 +23,9 @@ class ExcelHandler:
             app.display_alerts = False
             app.screen_updating = False
 
-            try:
-                # إضافة هذا السطر قبل فتح الملف للتأكد من أن أي رسائل "إصلاح" يتم قبولها تلقائياً
-                wb = app.books.open(absolute_path, update_links=False, ignore_read_only_corrupted=True)
+            # التعديل الصحيح للبارامترات
+            wb = app.books.open(absolute_path, update_links=False, ignore_read_only_recommended=True)
 
-            # تجاهل رسائل تحديث الروابط (update_links=False)
-            wb = app.books.open(absolute_path, update_links=False)
-            # ========================================
 
             sheet1 = wb.sheets["ورقة1"]
 

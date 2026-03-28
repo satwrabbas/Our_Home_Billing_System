@@ -1,61 +1,20 @@
-# file_manager.py
-import shutil
-from datetime import datetime
-import config
-
-class FileManager:
+# أضف هذه الدالة إلى نهاية الكلاس في ملف file_manager.py
     @staticmethod
-    def setup_directories():
-        """تهيئة وإنشاء المجلدات إذا لم تكن موجودة"""
-        for folder in config.FOLDERS:
-            folder.mkdir(parents=True, exist_ok=True)
+    def create_client_file(client_name):
+        """يقوم بإنشاء ملف عميل جديد من القالب الأساسي"""
+        try:
+            # التحقق من أن العميل غير موجود مسبقاً لمنع الكتابة فوقه
+            if (config.UNALLOCATED_DIR / f"{client_name}.xlsx").exists() or \
+               (config.ALLOCATED_DIR / f"{client_name}.xlsx").exists():
+                return False, "خطأ: عميل بهذا الاسم موجود بالفعل!"
 
-    @staticmethod
-    def get_all_clients():
-        """جلب أسماء جميع العملاء من المجلدين"""
-        clients = []
-        for folder in[config.UNALLOCATED_DIR, config.ALLOCATED_DIR]:
-            for file in folder.glob("*.xlsx"):
-                if not file.name.startswith("~"):
-                    clients.append(file.stem)
-        return sorted(clients)
+            template_path = config.TEMPLATES_DIR / "Template.xlsx"
+            if not template_path.exists():
+                return False, "خطأ فادح: ملف القالب Template.xlsx غير موجود!"
 
-    @staticmethod
-    def get_unallocated_clients():
-        """جلب أسماء العملاء غير المخصصين فقط"""
-        clients =[]
-        for file in config.UNALLOCATED_DIR.glob("*.xlsx"):
-            if not file.name.startswith("~"):
-                clients.append(file.stem)
-        return sorted(clients)
+            new_client_path = config.UNALLOCATED_DIR / f"{client_name}.xlsx"
+            shutil.copy2(template_path, new_client_path)
+            return True, f"تم إنشاء ملف للعميل '{client_name}' بنجاح في مجلد 'لاحق التخصص'."
 
-    @staticmethod
-    def get_client_file(client_name):
-        """تحديد مسار ملف العميل وحالته"""
-        unallocated_path = config.UNALLOCATED_DIR / f"{client_name}.xlsx"
-        allocated_path = config.ALLOCATED_DIR / f"{client_name}.xlsx"
-
-        if allocated_path.exists():
-            return allocated_path, "Allocated"
-        elif unallocated_path.exists():
-            return unallocated_path, "Unallocated"
-        raise FileNotFoundError(f"لم يتم العثور على ملف العميل: {client_name}")
-
-    @staticmethod
-    def backup_file(file_path):
-        """أخذ نسخة احتياطية من الملف"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_name = f"{file_path.stem}_backup_{timestamp}{file_path.suffix}"
-        backup_path = config.BACKUPS_DIR / backup_name
-        shutil.copy2(file_path, backup_path)
-
-    @staticmethod
-    def move_to_allocated(client_name):
-        """نقل ملف العميل إلى مجلد المتخصص"""
-        file_path, status = FileManager.get_client_file(client_name)
-        if status == "Allocated":
-            return False, "هذا العميل مخصص بالفعل!"
-        
-        new_path = config.ALLOCATED_DIR / f"{client_name}.xlsx"
-        shutil.move(str(file_path), str(new_path))
-        return True, f"تم نقل العميل {client_name} بنجاح إلى الشقق المتخصصة."
+        except Exception as e:
+            return False, f"حدث خطأ أثناء إنشاء ملف العميل الجديد: {str(e)}"
